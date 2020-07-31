@@ -8,6 +8,7 @@ SuperCollider convenience class for creating a json file. It takes in a dictiona
 
 */
 
+
 JSONFileWriter {
 
 	*new {
@@ -42,8 +43,9 @@ JSONFileWriter {
 		object.keys.do({
 			arg key, i;
 			var item = object[key];
+			//"object class: %".format(object.class).postln;
 			case
-			{item.isString}{
+			{item.isString || item.isKindOf(Symbol)}{
 				returnString = returnString ++ "\"%\":\"%\"".format(key.asString,item);
 			}
 			{item.isNumber}{
@@ -52,8 +54,15 @@ JSONFileWriter {
 			{item.isArray}{
 				returnString = returnString ++ "\"%\":%".format(key.asString,item.asCompileString);
 			}
-			{item.isKindOf(Event)}{
+			{item.isKindOf(Event) || item.isKindOf(Dictionary)}{
 				returnString = returnString ++ "\"%\":%".format(key.asString,this.unpackObject(item,depth+1));
+			}
+			{
+/*				"ERROR: DON'T KNOW WHAT TO DO WITH THIS:".warn;
+				item.postln;
+				item.class.postln;
+				"".postln;*/
+				returnString = item.asCompileString;
 			};
 
 			if(i != (object.keys.size-1),{
