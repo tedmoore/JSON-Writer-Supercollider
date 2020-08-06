@@ -9,7 +9,7 @@ SuperCollider convenience class for creating a json file. It takes in a dictiona
 */
 
 
-JSONFileWriter {
+JSONWriter {
 
 	*new {
 		arg object, path;
@@ -30,49 +30,27 @@ JSONFileWriter {
 
 	unpackObject {
 		arg object, depth = 0;
-		var returnString = "";
-		/*	depth.do({
-		arg i;
-		returnString = returnString ++ "\t";
-		});*/
-		returnString = returnString ++ "{\n";
-		(depth+1).do({
-			arg i;
-			returnString = returnString ++ "\t";
-		});
+		var returnString = "{\n";
+
 		object.keys.do({
 			arg key, i;
 			var item = object[key];
 			//"object class: %".format(object.class).postln;
-			case
-			{item.isString || item.isKindOf(Symbol)}{
-				returnString = returnString ++ "\"%\":\"%\"".format(key.asString,item);
-			}
-			{item.isNumber}{
-				returnString = returnString ++ "\"%\":%".format(key.asString,item.asCompileString);
-			}
-			{item.isArray}{
-				returnString = returnString ++ "\"%\":%".format(key.asString,item.asCompileString);
-			}
-			{item.isKindOf(Event) || item.isKindOf(Dictionary)}{
-				returnString = returnString ++ "\"%\":%".format(key.asString,this.unpackObject(item,depth+1));
-			}
-			{
-/*				"ERROR: DON'T KNOW WHAT TO DO WITH THIS:".warn;
-				item.postln;
-				item.class.postln;
-				"".postln;*/
-				returnString = item.asCompileString;
-			};
+
+			/*returnString = returnString ++ "\n";*/
+
+			(depth+1).do({
+				arg i;
+				returnString = returnString ++ "\t";
+			});
+
+			returnString = returnString ++ "\"%\":%".format(key,this.item_to_return_string(item,depth));
 
 			if(i != (object.keys.size-1),{
 				returnString = returnString ++ ",\n";
-				(depth+1).do({
-					arg j;
-					returnString = returnString ++ "\t";
-				});
 			})
 		});
+
 		returnString = "%\n".format(returnString);
 		depth.do({
 			arg i;
@@ -80,5 +58,51 @@ JSONFileWriter {
 		});
 		returnString = returnString ++ "}";
 		^returnString;
+	}
+
+	item_to_return_string {
+		arg item, depth;
+		var returnString;
+		case
+		{item.isString || item.isKindOf(Symbol)}{
+			returnString = item.asString.asCompileString;
+		}
+		{item.isNumber}{
+			var return = nil;
+			case
+			{item == inf}{return = "inf".asCompileString}
+			{item == -inf}{return = "-inf".asCompileString}
+			{return = item.asCompileString};
+			returnString = return;
+		}
+		{item.isArray}{
+			returnString = this.unpack_array(item,depth+1);
+		}
+		{item.isKindOf(Event).or(item.isKindOf(Dictionary)).or(item.isKindOf(IdentityDictionary))}{
+			returnString = this.unpackObject(item,depth+1);
+		}
+		{item.isKindOf(Boolean)}{
+			returnString = item.asString;
+		}
+		{item.isNil}{
+			returnString = "null";
+		}
+		{
+			"ERROR: DON'T KNOW WHAT TO DO WITH THIS:".warn;
+			item.postln;
+			item.class.postln;
+			"".postln;
+			returnString = item.asCompileString;
+		};
+
+		^returnString;
+	}
+
+	unpack_array {
+		arg array,depth;
+		^array.collect({
+			arg item;
+			this.item_to_return_string(item,depth);
+		});
 	}
 }
