@@ -35,7 +35,8 @@ JSONWriter {
 		object.keys.do({
 			arg key, i;
 			var item = object[key];
-			//"object class: %".format(object.class).postln;
+			//"key: %\t\titem: %".format(key,item).postln;
+			//"item class: %\n".format(item.class).postln;
 
 			/*returnString = returnString ++ "\n";*/
 
@@ -65,7 +66,7 @@ JSONWriter {
 		var returnString;
 		case
 		{item.isString || item.isKindOf(Symbol)}{
-			returnString = item.asString.asCompileString;
+			returnString = item.asString.cs;
 		}
 		{item.isNumber}{
 			var return = nil;
@@ -75,7 +76,7 @@ JSONWriter {
 			{return = item.asCompileString};
 			returnString = return;
 		}
-		{item.isArray}{
+		{item.isSequenceableCollection.and(item.isString.not)}{
 			returnString = this.unpack_array(item,depth+1);
 		}
 		{item.isKindOf(Event).or(item.isKindOf(Dictionary)).or(item.isKindOf(IdentityDictionary))}{
@@ -100,9 +101,18 @@ JSONWriter {
 
 	unpack_array {
 		arg array,depth;
-		^array.collect({
-			arg item;
-			this.item_to_return_string(item,depth);
+		var returnString = "[ ";
+		array.do({
+			arg item, idx;
+			returnString = returnString ++ this.item_to_return_string(item,depth);
+
+			if(idx < (array.size-1),{
+				returnString = returnString ++ ", ";
+			});
+
 		});
+		returnString = returnString ++ " ]";
+		//returnString.postln;
+		^returnString;
 	}
 }
