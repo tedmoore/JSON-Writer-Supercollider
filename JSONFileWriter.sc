@@ -85,6 +85,9 @@ JSONWriter {
 		{item.isKindOf(Boolean)}{
 			returnString = item.asString;
 		}
+		{item.isKindOf(Char)}{
+			returnString = item.asString.cs;
+		}
 		{item.isNil}{
 			returnString = "null";
 		}
